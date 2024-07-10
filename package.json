@@ -1,6 +1,6 @@
 {
   "name": "mage-react-cam",
-  "version": "1.0.2",
+  "version": "1.0.3",
   "description": "A React component for capturing camera input",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
@@ -28,5 +28,13 @@
     "@types/react-dom": "^18.3.0",
     "csstype": "^3.1.3",
     "typescript": "^5.5.3"
-  }
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+ssh://git@github.com/teilorbarcelos/mage-react-cam.git"
+  },
+  "bugs": {
+    "url": "https://github.com/teilorbarcelos/mage-react-cam/issues"
+  },
+  "homepage": "https://github.com/teilorbarcelos/mage-react-cam#readme"
 }
