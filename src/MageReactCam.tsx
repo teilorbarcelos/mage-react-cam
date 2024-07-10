@@ -4,12 +4,35 @@ import {
   useImperativeHandle,
   useRef,
   useState,
-} from 'react';
+} from "react";
+
+type CustomMediaTrackCapabilitiesProps = MediaTrackCapabilities & {
+  torch: any;
+};
+
+interface CustomVideoTrackProps {
+  getCapabilities: () => CustomMediaTrackCapabilitiesProps;
+  getConstraints: () => CustomMediaTrackCapabilitiesProps;
+  applyConstraints: (data: { advanced: { torch: any }[] }) => Promise<void>;
+}
+
+type GetTrackProps = { stop: () => void };
+
+export interface MediaSrcObjectProps {
+  getVideoTracks: () => CustomVideoTrackProps[];
+  getTracks: () => GetTrackProps[];
+  removeTrack: (data: GetTrackProps) => void;
+}
+
+export type CustomMediaVideoProps = HTMLVideoElement & {
+  srcObject: MediaSrcObjectProps;
+};
 
 export type TReactCamRef = {
-  snapshot: () => void;
+  snapshot: () => string | undefined;
   zoomIn: () => void;
   zoomOut: () => void;
+  video?: CustomMediaVideoProps;
 };
 
 interface MageReactCamProps {
@@ -17,20 +40,27 @@ interface MageReactCamProps {
   videoConstraints?: MediaStreamConstraints;
   width?: number;
   height?: number;
+  facingMode?: "environment" | "user";
 }
 
 const MageReactCam = forwardRef<TReactCamRef, MageReactCamProps>(
   (
-    { onUserMediaError, videoConstraints, width, height }: MageReactCamProps,
-    ref,
+    {
+      onUserMediaError,
+      videoConstraints,
+      width,
+      height,
+      facingMode,
+    }: MageReactCamProps,
+    ref
   ) => {
-    const internalRef = useRef<HTMLVideoElement | null>(null);
+    const internalRef = useRef<HTMLVideoElement>(null);
 
     const snapshot = () => {
       if (internalRef.current) {
         const video = internalRef.current;
-        const tempCanvas = document.createElement('canvas');
-        const tempContext = tempCanvas.getContext('2d');
+        const tempCanvas = document.createElement("canvas");
+        const tempContext = tempCanvas.getContext("2d");
         tempCanvas.width = video.videoWidth;
         tempCanvas.height = video.videoHeight;
         tempContext?.drawImage(
@@ -38,10 +68,10 @@ const MageReactCam = forwardRef<TReactCamRef, MageReactCamProps>(
           0,
           0,
           tempCanvas.width,
-          tempCanvas.height,
+          tempCanvas.height
         );
 
-        const dataURL = tempCanvas.toDataURL('image/jpeg');
+        const dataURL = tempCanvas.toDataURL("image/jpeg");
         return dataURL;
       }
     };
@@ -68,7 +98,7 @@ const MageReactCam = forwardRef<TReactCamRef, MageReactCamProps>(
         ? videoConstraints
         : {
             video: {
-              facingMode: 'environment',
+              facingMode: facingMode || "environment",
               width: { ideal: width || 500 },
               height: { ideal: height || 500 },
             },
@@ -112,10 +142,9 @@ const MageReactCam = forwardRef<TReactCamRef, MageReactCamProps>(
     ]);
 
     return <video ref={internalRef} autoPlay />;
-  },
+  }
 );
 
-MageReactCam.displayName = 'MageReactCam';
+MageReactCam.displayName = "MageReactCam";
 
 export default MageReactCam;
-
