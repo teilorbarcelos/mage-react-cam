@@ -1,5 +1,13 @@
 ## Mage React Cam
 
+# Install:
+
+`npm i mage-react-cam`
+
+or
+
+`yarn add mage-react-cam`
+
 # Usage:
 
 ```
