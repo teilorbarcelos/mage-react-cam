@@ -12,6 +12,7 @@ or
 
 ```
 import { MageReactCam } from 'mage-react-cam';
+import { MediaSrcObjectProps, TReactCamRef } from 'mage-react-cam/dist/MageReactCam';
 import { ReactElement, useCallback, useEffect, useRef, useState } from 'react';
 
 interface MyReactCamComponentProps {
@@ -35,7 +36,7 @@ const MyReactCamComponent = ({
   stopStream,
 }: MyReactCamComponentProps): ReactElement => {
   const [timer, setTimer] = useState<boolean>(false);
-  const videoRef = useRef(null) as any;
+  const videoRef = useRef<TReactCamRef>(null);
 
   const handlerSnapshot = () => {
     const snapShot = videoRef?.current?.snapshot;
@@ -69,9 +70,9 @@ const MyReactCamComponent = ({
   useEffect(() => {
     if (
       typeof torch === 'boolean' &&
-      (navigator?.mediaDevices?.getSupportedConstraints() as any).torch
+      (navigator?.mediaDevices?.getSupportedConstraints() as { torch: any }).torch
     ) {
-      const stream = videoRef?.current?.video.srcObject;
+      const stream = videoRef?.current?.video?.srcObject as MediaSrcObjectProps;
       const track = stream?.getVideoTracks()[0];
       if (
         track &&
@@ -89,13 +90,13 @@ const MyReactCamComponent = ({
 
   useEffect(() => {
     if (stopStream) {
-      let stream = videoRef?.current?.video.srcObject;
+      let stream = videoRef?.current?.video?.srcObject;
       if (stream) {
         stream.getTracks().forEach((track: any) => {
-          stream.removeTrack(track);
+          stream?.removeTrack(track);
           track.stop();
         });
-        stream = null;
+        stream = undefined;
       }
     }
   }, [stopStream]);
@@ -113,6 +114,9 @@ const MyReactCamComponent = ({
           ref={videoRef}
           onUserMediaError={onError}
           videoConstraints={videoConstraints}
+          width={500}
+          height={500}
+          facingMode="environment"
         />
     </div>
   );
