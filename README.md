@@ -10,6 +10,10 @@ or
 
 # Usage:
 
+Here is a basic example of how to use mage-react-cam in your React project.
+
+Import and Basic Usage:
+
 ```
 import { MageReactCam } from 'mage-react-cam';
 import { MediaSrcObjectProps, TReactCamRef } from 'mage-react-cam/dist/MageReactCam';
@@ -43,12 +47,12 @@ const MyReactCamComponent = ({
     if (snapShot) return snapShot();
   };
 
-  const handleZoomIn = () => { // use if need zoom +
+  const handleZoomIn = () => {
     const zoomIn = videoRef?.current?.zoomIn;
     if (zoomIn) zoomIn();
   };
 
-  const handleZoomOut = () => { // use if need zoom -
+  const handleZoomOut = () => {
     const zoomOut = videoRef?.current?.zoomOut;
     if (zoomOut) zoomOut();
   };
@@ -118,9 +122,26 @@ const MyReactCamComponent = ({
           height={500}
           facingMode="environment"
         />
+        <button onClick={handlerSnapshot}>Take Snapshot</button>
+        <button onClick={handleZoomIn}>Zoom In</button>
+        <button onClick={handleZoomOut}>Zoom Out</button>
     </div>
   );
 };
 
 export default MyReactCamComponent;
 ```
+
+# Props
+
+- onUserMediaError: Function called when there is an error accessing the camera.
+- videoConstraints: Media constraints for the video.
+- width: Width of the video.
+- height: Height of the video.
+- facingMode: Defines which camera to use ("environment" for the back camera and "user" for the front camera).
+
+# Methods
+
+- snapshot: Takes a snapshot of the current video stream and returns the image as a data URL.
+- zoomIn: Increases the camera zoom.
+- zoomOut: Decreases the camera zoom.
