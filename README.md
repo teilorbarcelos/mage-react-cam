@@ -15,31 +15,13 @@ Here is a basic example of how to use mage-react-cam in your React project.
 Import and Basic Usage:
 
 ```
-import { MageReactCam } from 'mage-react-cam';
-import { MediaSrcObjectProps, TReactCamRef } from 'mage-react-cam/dist/MageReactCam';
-import { ReactElement, useCallback, useEffect, useRef, useState } from 'react';
+import { useRef, useState } from "react";
+import "./App.css";
+import { MageReactCam } from "./components/MageReactCam";
+import { TReactCamRef } from "./components/MageReactCam/MageReactCam";
 
-interface MyReactCamComponentProps {
-  onUpdate: (arg0: unknown, arg1?: any) => void;
-  onError?: (arg0: string | DOMException) => void;
-  width?: number | string;
-  height?: number | string;
-  facingMode?: 'environment' | 'user';
-  torch?: boolean;
-  delay?: number;
-  videoConstraints?: MediaStreamConstraints;
-  stopStream?: boolean;
-}
-
-const MyReactCamComponent = ({
-  onUpdate,
-  onError,
-  torch,
-  delay = 500,
-  videoConstraints,
-  stopStream,
-}: MyReactCamComponentProps): ReactElement => {
-  const [timer, setTimer] = useState<boolean>(false);
+const App = () => {
+  const [currentImage, setCurrentImage] = useState<string>();
   const videoRef = useRef<TReactCamRef>(null);
 
   const handlerSnapshot = () => {
@@ -57,79 +39,38 @@ const MyReactCamComponent = ({
     if (zoomOut) zoomOut();
   };
 
-  useEffect(() => {
-    if (timer)
-      setTimeout(() => {
-        setTimer(false);
-      }, 3000);
-  }, [timer]);
-
-  const capture = useCallback(() => {
+  const capture = () => {
     const imageSrc = handlerSnapshot();
     if (imageSrc) {
-      // use imageSrc like you want
+      setCurrentImage(imageSrc);
     }
-  }, [onUpdate, videoRef]);
-
-  useEffect(() => {
-    if (
-      typeof torch === 'boolean' &&
-      (navigator?.mediaDevices?.getSupportedConstraints() as { torch: any }).torch
-    ) {
-      const stream = videoRef?.current?.video?.srcObject as MediaSrcObjectProps;
-      const track = stream?.getVideoTracks()[0];
-      if (
-        track &&
-        track.getCapabilities().torch &&
-        !track.getConstraints().torch
-      ) {
-        track
-          .applyConstraints({
-            advanced: [{ torch }],
-          })
-          .catch((err: any) => onUpdate(err));
-      }
-    }
-  }, [torch, onUpdate]);
-
-  useEffect(() => {
-    if (stopStream) {
-      let stream = videoRef?.current?.video?.srcObject;
-      if (stream) {
-        stream.getTracks().forEach((track: any) => {
-          stream?.removeTrack(track);
-          track.stop();
-        });
-        stream = undefined;
-      }
-    }
-  }, [stopStream]);
-
-  useEffect(() => {
-    const interval = setInterval(capture, delay);
-    return () => {
-      clearInterval(interval);
-    };
-  }, []);
+  };
 
   return (
-    <div>
-        <MageReactCam
-          ref={videoRef}
-          onUserMediaError={onError}
-          videoConstraints={videoConstraints}
-          width={500}
-          height={500}
-          facingMode="environment"
+    <div className="main-container">
+      <MageReactCam
+        ref={videoRef}
+        onUserMediaError={(error) => console.log(error)}
+        videoConstraints={undefined}
+        width={500}
+        height={500}
+        facingMode="environment"
+      />
+      <button onClick={capture}>Take Snapshot</button>
+      <button onClick={handleZoomIn}>Zoom In</button>
+      <button onClick={handleZoomOut}>Zoom Out</button>
+      {currentImage && (
+        <img
+          src={currentImage}
+          alt="current captured image"
+          style={{ width: "100%" }}
         />
-        <button onClick={handlerSnapshot}>Take Snapshot</button>
-        <button onClick={handleZoomIn}>Zoom In</button>
-        <button onClick={handleZoomOut}>Zoom Out</button>
+      )}
     </div>
   );
 };
 
-export default MyReactCamComponent;
+export default App;
 ```
 
 # Props

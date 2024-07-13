@@ -6,25 +6,14 @@ import {
   useState,
 } from "react";
 
-type CustomMediaTrackCapabilitiesProps = MediaTrackCapabilities & {
-  torch: any;
-};
-
-interface CustomVideoTrackProps {
-  getCapabilities: () => CustomMediaTrackCapabilitiesProps;
-  getConstraints: () => CustomMediaTrackCapabilitiesProps;
-  applyConstraints: (data: { advanced: { torch: any }[] }) => Promise<void>;
-}
-
 type GetTrackProps = { stop: () => void };
 
-export interface MediaSrcObjectProps {
-  getVideoTracks: () => CustomVideoTrackProps[];
+interface MediaSrcObjectProps {
   getTracks: () => GetTrackProps[];
   removeTrack: (data: GetTrackProps) => void;
 }
 
-export type CustomMediaVideoProps = HTMLVideoElement & {
+type CustomMediaVideoProps = HTMLVideoElement & {
   srcObject: MediaSrcObjectProps;
 };
 
@@ -43,6 +32,10 @@ interface MageReactCamProps {
   facingMode?: "environment" | "user";
 }
 
+type CustomConstraintsProps = MediaStreamConstraints & {
+  video: MediaTrackConstraints & { advanced?: { zoom: number }[] };
+};
+
 const MageReactCam = forwardRef<TReactCamRef, MageReactCamProps>(
   (
     {
@@ -54,7 +47,8 @@ const MageReactCam = forwardRef<TReactCamRef, MageReactCamProps>(
     }: MageReactCamProps,
     ref
   ) => {
-    const internalRef = useRef<HTMLVideoElement>(null);
+    const internalRef = useRef<HTMLVideoElement & TReactCamRef>(null);
+    const [zoomLevel, setZoomLevel] = useState(1);
 
     const snapshot = () => {
       if (internalRef.current) {
@@ -76,8 +70,6 @@ const MageReactCam = forwardRef<TReactCamRef, MageReactCamProps>(
       }
     };
 
-    const [zoomLevel, setZoomLevel] = useState(1);
-
     const zoomIn = () => {
       setZoomLevel((prevZoom) => prevZoom + 1);
     };
@@ -93,25 +85,18 @@ const MageReactCam = forwardRef<TReactCamRef, MageReactCamProps>(
     }));
 
     useEffect(() => {
-      if (!internalRef?.current) return;
-      const constraints: any = videoConstraints
-        ? videoConstraints
-        : {
-            video: {
-              facingMode: facingMode || "environment",
-              width: { ideal: width || 500 },
-              height: { ideal: height || 500 },
+      const constraints: CustomConstraintsProps = {
+        video: {
+          facingMode: facingMode || "environment",
+          width: { ideal: width || 500 },
+          height: { ideal: height || 500 },
+          advanced: [
+            {
+              zoom: zoomLevel,
             },
-          };
-
-      if (constraints.video) {
-        if (zoomLevel > 0) {
-          const advancedConstraints = {
-            zoom: zoomLevel,
-          };
-          constraints.video.advanced = [advancedConstraints];
-        }
-      }
+          ],
+        },
+      };
 
       let stream: MediaStream;
 
@@ -139,9 +124,10 @@ const MageReactCam = forwardRef<TReactCamRef, MageReactCamProps>(
       onUserMediaError,
       height,
       width,
+      facingMode,
     ]);
 
-    return <video ref={internalRef} autoPlay />;
+    return <video style={{ width: "100%" }} ref={internalRef} autoPlay />;
   }
 );
 
