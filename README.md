@@ -17,8 +17,7 @@ Import and Basic Usage:
 ```
 import { useRef, useState } from "react";
 import "./App.css";
-import { MageReactCam } from "./components/MageReactCam";
-import { TReactCamRef } from "./components/MageReactCam/MageReactCam";
+import MageReactCam, { TReactCamRef } from "mage-react-cam/dist/MageReactCam";
 
 const App = () => {
   const [currentImage, setCurrentImage] = useState<string>();
