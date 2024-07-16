@@ -38,6 +38,11 @@ const App = () => {
     if (zoomOut) zoomOut();
   };
 
+  const handleSwitchFacingMode = () => {
+    const switchFacingMode = videoRef?.current?.switchFacingMode;
+    if (switchFacingMode) switchFacingMode();
+  };
+
   const capture = () => {
     const imageSrc = handlerSnapshot();
     if (imageSrc) {
@@ -60,6 +65,7 @@ const App = () => {
       <button onClick={capture}>Take Snapshot</button>
       <button onClick={handleZoomIn}>Zoom In</button>
       <button onClick={handleZoomOut}>Zoom Out</button>
+      <button onClick={handleSwitchFacingMode}>Switch Facing Mode</button>
       {currentImage && (
         <img
           src={currentImage}
