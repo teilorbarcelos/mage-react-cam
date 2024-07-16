@@ -22,6 +22,7 @@ export type TReactCamRef = {
   snapshot: () => string | undefined;
   zoomIn: () => void;
   zoomOut: () => void;
+  switchFacingMode: () => void;
   video?: CustomMediaVideoProps;
 };
 
@@ -44,13 +45,16 @@ const MageReactCam = forwardRef<TReactCamRef, MageReactCamProps>(
       videoConstraints,
       width,
       height,
-      facingMode,
+      facingMode = "environment",
       ...rest
     }: MageReactCamProps,
     ref
   ) => {
     const internalRef = useRef<HTMLVideoElement & TReactCamRef>(null);
     const [zoomLevel, setZoomLevel] = useState(1);
+    const [currentFacingMode, setCurrentFacingMode] = useState<
+      "environment" | "user"
+    >(facingMode);
 
     const snapshot = () => {
       if (internalRef.current) {
@@ -80,16 +84,23 @@ const MageReactCam = forwardRef<TReactCamRef, MageReactCamProps>(
       setZoomLevel((prevZoom) => (prevZoom > 1 ? prevZoom - 1 : prevZoom));
     };
 
+    const switchFacingMode = () => {
+      setCurrentFacingMode((prevFacingMode) =>
+        prevFacingMode === "environment" ? "user" : "environment"
+      );
+    };
+
     useImperativeHandle(ref, () => ({
       snapshot,
       zoomIn,
       zoomOut,
+      switchFacingMode,
     }));
 
     useEffect(() => {
       const constraints: CustomConstraintsProps = {
         video: {
-          facingMode: facingMode || "environment",
+          facingMode: currentFacingMode,
           width: { ideal: width || 500 },
           height: { ideal: height || 500 },
           advanced: [
@@ -127,6 +138,7 @@ const MageReactCam = forwardRef<TReactCamRef, MageReactCamProps>(
       height,
       width,
       facingMode,
+      currentFacingMode,
     ]);
 
     return <video style={{ width: "100%" }} ref={internalRef} {...rest} />;
