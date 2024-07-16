@@ -17,7 +17,7 @@ Import and Basic Usage:
 ```
 import { useRef, useState } from "react";
 import "./App.css";
-import MageReactCam, { TReactCamRef } from "mage-react-cam/dist/MageReactCam";
+import { MageReactCam, TReactCamRef } from "mage-react-cam";
 
 const App = () => {
   const [currentImage, setCurrentImage] = useState<string>();
@@ -38,6 +38,11 @@ const App = () => {
     if (zoomOut) zoomOut();
   };
 
+  const handleSwitchFacingMode = () => {
+    const switchFacingMode = videoRef?.current?.switchFacingMode;
+    if (switchFacingMode) switchFacingMode();
+  };
+
   const capture = () => {
     const imageSrc = handlerSnapshot();
     if (imageSrc) {
@@ -54,10 +59,13 @@ const App = () => {
         width={500}
         height={500}
         facingMode="environment"
+        autoPlay
+        playsInline
       />
       <button onClick={capture}>Take Snapshot</button>
       <button onClick={handleZoomIn}>Zoom In</button>
       <button onClick={handleZoomOut}>Zoom Out</button>
+      <button onClick={handleSwitchFacingMode}>Switch Facing Mode</button>
       {currentImage && (
         <img
           src={currentImage}
@@ -79,6 +87,7 @@ export default App;
 - width: Width of the video.
 - height: Height of the video.
 - facingMode: Defines which camera to use ("environment" for the back camera and "user" for the front camera).
+- All video html props: autoPlay, playsInline, etc...
 
 # Methods
 

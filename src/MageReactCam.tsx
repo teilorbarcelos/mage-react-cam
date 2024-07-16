@@ -4,6 +4,7 @@ import {
   useImperativeHandle,
   useRef,
   useState,
+  VideoHTMLAttributes,
 } from "react";
 
 type GetTrackProps = { stop: () => void };
@@ -24,7 +25,7 @@ export type TReactCamRef = {
   video?: CustomMediaVideoProps;
 };
 
-interface MageReactCamProps {
+interface MageReactCamProps extends VideoHTMLAttributes<HTMLVideoElement> {
   onUserMediaError?: (arg0: string | DOMException) => void;
   videoConstraints?: MediaStreamConstraints;
   width?: number;
@@ -44,6 +45,7 @@ const MageReactCam = forwardRef<TReactCamRef, MageReactCamProps>(
       width,
       height,
       facingMode,
+      ...rest
     }: MageReactCamProps,
     ref
   ) => {
@@ -127,7 +129,7 @@ const MageReactCam = forwardRef<TReactCamRef, MageReactCamProps>(
       facingMode,
     ]);
 
-    return <video style={{ width: "100%" }} ref={internalRef} autoPlay />;
+    return <video style={{ width: "100%" }} ref={internalRef} {...rest} />;
   }
 );
 
