@@ -94,3 +94,4 @@ export default App;
 - snapshot: Takes a snapshot of the current video stream and returns the image as a data URL.
 - zoomIn: Increases the camera zoom.
 - zoomOut: Decreases the camera zoom.
+- switchFacingMode: Switch the facing mode.
