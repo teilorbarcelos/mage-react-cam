@@ -17,9 +17,13 @@ Import and Basic Usage:
 ```
 import { useRef, useState } from "react";
 import "./App.css";
-import { MageReactCam, TReactCamRef } from "mage-react-cam";
+import MageReactCam, {
+  TReactCamRef,
+} from "./components/MageReactCam/MageReactCam";
 
 const App = () => {
+  const [maxZoom, setMaxZoom] = useState<number>();
+  const [currentZoomLevel, setCurrentZoomLevel] = useState<number>();
   const [currentImage, setCurrentImage] = useState<string>();
   const videoRef = useRef<TReactCamRef>(null);
 
@@ -43,6 +47,12 @@ const App = () => {
     if (switchFacingMode) switchFacingMode();
   };
 
+  const handleGetMaxZoomLevel = () => () =>
+    setMaxZoom(videoRef?.current?.getMaxZoomLevel || 1);
+
+  const handleGetCurrentZoomLevel = () =>
+    setCurrentZoomLevel(videoRef?.current?.getCurrentZoomLevel || 1);
+
   const capture = () => {
     const imageSrc = handlerSnapshot();
     if (imageSrc) {
@@ -52,6 +62,7 @@ const App = () => {
 
   return (
     <div className="main-container">
+      <h1>Mage React Cam</h1>
       <MageReactCam
         ref={videoRef}
         onUserMediaError={(error) => console.log(error)}
@@ -62,6 +73,14 @@ const App = () => {
         autoPlay
         playsInline
       />
+      <button onClick={handleGetMaxZoomLevel}>
+        {maxZoom ? `Max zoom level: ${maxZoom}` : "Get max zoom level"}
+      </button>
+      <button onClick={handleGetCurrentZoomLevel}>
+        {currentZoomLevel
+          ? `Current zoom level: ${currentZoomLevel}`
+          : "Get current zoom level"}
+      </button>
       <button onClick={capture}>Take Snapshot</button>
       <button onClick={handleZoomIn}>Zoom In</button>
       <button onClick={handleZoomOut}>Zoom Out</button>
@@ -73,6 +92,10 @@ const App = () => {
           style={{ width: "100%" }}
         />
       )}
+
+      <a target="_blank" href="https://www.npmjs.com/package/mage-react-cam">
+        HOW TO USE IT
+      </a>
     </div>
   );
 };
@@ -95,3 +118,5 @@ export default App;
 - zoomIn: Increases the camera zoom.
 - zoomOut: Decreases the camera zoom.
 - switchFacingMode: Switch the facing mode.
+- getMaxZoomLevel: Get the max zoom level information.
+- getCurrentZoomLevel: Get the current zoom level information.

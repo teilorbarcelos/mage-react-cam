@@ -7,6 +7,10 @@ import {
   VideoHTMLAttributes,
 } from "react";
 
+type CustomMediaTrackCapabilitiesProps = MediaTrackCapabilities & {
+  zoom: { max: number };
+};
+
 type GetTrackProps = { stop: () => void };
 
 interface MediaSrcObjectProps {
@@ -23,6 +27,8 @@ export type TReactCamRef = {
   zoomIn: () => void;
   zoomOut: () => void;
   switchFacingMode: () => void;
+  getMaxZoomLevel: () => number;
+  getCurrentZoomLevel: () => number;
   video?: CustomMediaVideoProps;
 };
 
@@ -51,7 +57,8 @@ const MageReactCam = forwardRef<TReactCamRef, MageReactCamProps>(
     ref
   ) => {
     const internalRef = useRef<HTMLVideoElement & TReactCamRef>(null);
-    const [zoomLevel, setZoomLevel] = useState(1);
+    const [maxZoom, setMaxZoom] = useState<number>(1);
+    const [zoomLevel, setZoomLevel] = useState<number>(1);
     const [currentFacingMode, setCurrentFacingMode] = useState<
       "environment" | "user"
     >(facingMode);
@@ -77,12 +84,17 @@ const MageReactCam = forwardRef<TReactCamRef, MageReactCamProps>(
     };
 
     const zoomIn = () => {
-      setZoomLevel((prevZoom) => prevZoom + 1);
+      setZoomLevel((prevZoom) =>
+        prevZoom + 1 <= maxZoom ? prevZoom + 1 : prevZoom
+      );
     };
 
     const zoomOut = () => {
       setZoomLevel((prevZoom) => (prevZoom > 1 ? prevZoom - 1 : prevZoom));
     };
+
+    const getMaxZoomLevel = () => maxZoom;
+    const getCurrentZoomLevel = () => zoomLevel;
 
     const switchFacingMode = () => {
       setCurrentFacingMode((prevFacingMode) =>
@@ -95,6 +107,8 @@ const MageReactCam = forwardRef<TReactCamRef, MageReactCamProps>(
       zoomIn,
       zoomOut,
       switchFacingMode,
+      getMaxZoomLevel,
+      getCurrentZoomLevel,
     }));
 
     useEffect(() => {
@@ -117,6 +131,13 @@ const MageReactCam = forwardRef<TReactCamRef, MageReactCamProps>(
         .getUserMedia(constraints)
         .then((s) => {
           stream = s;
+          const videoTrack = stream.getVideoTracks()[0];
+          const capabilities =
+            videoTrack.getCapabilities() as CustomMediaTrackCapabilitiesProps;
+          if (capabilities.zoom) {
+            const maxZoom = capabilities.zoom.max;
+            setMaxZoom(maxZoom);
+          }
           if (internalRef.current) {
             internalRef.current.srcObject = stream;
           }
