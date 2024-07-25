@@ -1,6 +1,6 @@
 {
   "name": "mage-react-cam",
-  "version": "1.0.14",
+  "version": "1.0.15",
   "description": "A React component for capturing camera input",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
