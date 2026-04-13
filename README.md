@@ -1,101 +1,63 @@
-## Mage React Cam
+# Mage React Cam
 
-# Install:
+A React library designed to facilitate the capture of video directly from the device's camera. It effectively abstracts away the complex `MediaDevices` API, allowing you to seamlessly handle camera streaming, snapshots, zooms, and camera switching without hassle.
 
-`npm i mage-react-cam`
+## Implementation Examples
 
-or
-
-`yarn add mage-react-cam`
-
-# Usage:
-
-Here is a basic example of how to use mage-react-cam in your React project.
-
-Import and Basic Usage:
-
-```
+```tsx
 import { useRef, useState } from "react";
-import "./App.css";
-import MageReactCam, {
-  TReactCamRef,
-} from "./components/MageReactCam/MageReactCam";
+import { MageReactCam, TReactCamRef } from "mage-react-cam";
 
 const App = () => {
-  const [maxZoom, setMaxZoom] = useState<number>();
-  const [currentZoomLevel, setCurrentZoomLevel] = useState<number>();
   const [currentImage, setCurrentImage] = useState<string>();
+  const [maxZoom, setMaxZoom] = useState<number>();
+  const [currentZoom, setCurrentZoom] = useState<number>();
   const videoRef = useRef<TReactCamRef>(null);
 
-  const handlerSnapshot = () => {
-    const snapShot = videoRef?.current?.snapshot;
-    if (snapShot) return snapShot();
+  const capture = () => {
+    const snap = videoRef.current?.snapshot();
+    if (snap) setCurrentImage(snap);
+  };
+
+  const toggleCamera = () => {
+    videoRef.current?.switchFacingMode();
   };
 
   const handleZoomIn = () => {
-    const zoomIn = videoRef?.current?.zoomIn;
-    if (zoomIn) zoomIn();
+    videoRef.current?.zoomIn();
+    setCurrentZoom(videoRef.current?.getCurrentZoomLevel());
   };
 
   const handleZoomOut = () => {
-    const zoomOut = videoRef?.current?.zoomOut;
-    if (zoomOut) zoomOut();
+    videoRef.current?.zoomOut();
+    setCurrentZoom(videoRef.current?.getCurrentZoomLevel());
   };
 
-  const handleSwitchFacingMode = () => {
-    const switchFacingMode = videoRef?.current?.switchFacingMode;
-    if (switchFacingMode) switchFacingMode();
-  };
-
-  const handleGetMaxZoomLevel = () => () =>
-    setMaxZoom(videoRef?.current?.getMaxZoomLevel || 1);
-
-  const handleGetCurrentZoomLevel = () =>
-    setCurrentZoomLevel(videoRef?.current?.getCurrentZoomLevel || 1);
-
-  const capture = () => {
-    const imageSrc = handlerSnapshot();
-    if (imageSrc) {
-      setCurrentImage(imageSrc);
-    }
+  const checkMaxZoom = () => {
+    setMaxZoom(videoRef.current?.getMaxZoomLevel());
   };
 
   return (
-    <div className="main-container">
-      <h1>Mage React Cam</h1>
+    <div>
       <MageReactCam
         ref={videoRef}
-        onUserMediaError={(error) => console.log(error)}
-        videoConstraints={undefined}
         width={500}
         height={500}
         facingMode="environment"
-        autoPlay
-        playsInline
+        onUserMediaError={(error) => console.error("Camera output error:", error)}
       />
-      <button onClick={handleGetMaxZoomLevel}>
-        {maxZoom ? `Max zoom level: ${maxZoom}` : "Get max zoom level"}
-      </button>
-      <button onClick={handleGetCurrentZoomLevel}>
-        {currentZoomLevel
-          ? `Current zoom level: ${currentZoomLevel}`
-          : "Get current zoom level"}
-      </button>
-      <button onClick={capture}>Take Snapshot</button>
-      <button onClick={handleZoomIn}>Zoom In</button>
-      <button onClick={handleZoomOut}>Zoom Out</button>
-      <button onClick={handleSwitchFacingMode}>Switch Facing Mode</button>
-      {currentImage && (
-        <img
-          src={currentImage}
-          alt="current captured image"
-          style={{ width: "100%" }}
-        />
-      )}
 
-      <a target="_blank" href="https://www.npmjs.com/package/mage-react-cam">
-        HOW TO USE IT
-      </a>
+      <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap', margin: "20px 0" }}>
+        <button onClick={capture}>Take Snapshot</button>
+        <button onClick={toggleCamera}>Switch Camera</button>
+        <button onClick={handleZoomIn}>Zoom In (Current: {currentZoom || 1})</button>
+        <button onClick={handleZoomOut}>Zoom Out</button>
+        <button onClick={checkMaxZoom}>Get Max Zoom (Max: {maxZoom || "?"})</button>
+      </div>
+
+      {currentImage && (
+        <img src={currentImage} alt="Captured preview" style={{ maxWidth: "100%" }} />
+      )}
     </div>
   );
 };
@@ -103,20 +65,35 @@ const App = () => {
 export default App;
 ```
 
-# Props
+## Install
 
-- onUserMediaError: Function called when there is an error accessing the camera.
-- videoConstraints: Media constraints for the video.
-- width: Width of the video.
-- height: Height of the video.
-- facingMode: Defines which camera to use ("environment" for the back camera and "user" for the front camera).
-- All video html props: autoPlay, playsInline, etc...
+```bash
+npm install mage-react-cam
+```
 
-# Methods
+or
 
-- snapshot: Takes a snapshot of the current video stream and returns the image as a data URL.
-- zoomIn: Increases the camera zoom.
-- zoomOut: Decreases the camera zoom.
-- switchFacingMode: Switch the facing mode.
-- getMaxZoomLevel: Get the max zoom level information.
-- getCurrentZoomLevel: Get the current zoom level information.
+```bash
+yarn add mage-react-cam
+```
+
+## Props
+
+- `onUserMediaError`: Function called when there is an error accessing the camera.
+- `videoConstraints`: Optional specific media constraints for the video stream (`MediaTrackConstraints`).
+- `width`: Ideal width of the requested video stream.
+- `height`: Ideal height of the requested video stream.
+- `facingMode`: Defines which camera setup to use (`"environment"` for the back camera and `"user"` for the front camera).
+- Accepts all standard `<video>` HTML attributes (`autoPlay`, `playsInline`, `muted`, `className`, `style`, etc), configured with smart camera defaults for simpler usage (`autoPlay`, `playsInline` and `muted` are enabled by default so the stream plays seamlessly).
+
+## Methods
+
+Available via the component `ref`:
+
+- `snapshot()`: Takes a snapshot of the current active video stream and returns the image as a base64 data URL.
+- `zoomIn()`: Increases the camera zoom level.
+- `zoomOut()`: Decreases the camera zoom level.
+- `switchFacingMode()`: Switches between the active facing modes (for example, swapping from back-to-front camera).
+- `getMaxZoomLevel()`: Returns the maximal supported zoom level by the device capability.
+- `getCurrentZoomLevel()`: Returns the currently applied zoom level.
+- `video`: Returns the raw `HTMLVideoElement` node.
