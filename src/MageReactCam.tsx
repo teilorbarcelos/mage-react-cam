@@ -7,20 +7,13 @@ import {
   VideoHTMLAttributes,
 } from "react";
 
-type CustomMediaTrackCapabilitiesProps = MediaTrackCapabilities & {
-  zoom: { max: number };
-};
-
-type GetTrackProps = { stop: () => void };
-
-interface MediaSrcObjectProps {
-  getTracks: () => GetTrackProps[];
-  removeTrack: (data: GetTrackProps) => void;
+interface ZoomMediaTrackConstraintSet extends MediaTrackConstraintSet {
+  zoom?: number;
 }
 
-type CustomMediaVideoProps = HTMLVideoElement & {
-  srcObject: MediaSrcObjectProps;
-};
+interface ZoomMediaTrackCapabilities extends MediaTrackCapabilities {
+  zoom?: { max: number; min: number; step: number };
+}
 
 export type TReactCamRef = {
   snapshot: () => string | undefined;
@@ -29,20 +22,16 @@ export type TReactCamRef = {
   switchFacingMode: () => void;
   getMaxZoomLevel: () => number;
   getCurrentZoomLevel: () => number;
-  video?: CustomMediaVideoProps;
+  video: HTMLVideoElement | null;
 };
 
 interface MageReactCamProps extends VideoHTMLAttributes<HTMLVideoElement> {
-  onUserMediaError?: (arg0: string | DOMException) => void;
-  videoConstraints?: MediaStreamConstraints;
+  onUserMediaError?: (error: unknown) => void;
+  videoConstraints?: MediaTrackConstraints;
   width?: number;
   height?: number;
   facingMode?: "environment" | "user";
 }
-
-type CustomConstraintsProps = MediaStreamConstraints & {
-  video: MediaTrackConstraints & { advanced?: { zoom: number }[] };
-};
 
 const MageReactCam = forwardRef<TReactCamRef, MageReactCamProps>(
   (
@@ -52,55 +41,44 @@ const MageReactCam = forwardRef<TReactCamRef, MageReactCamProps>(
       width,
       height,
       facingMode = "environment",
+      autoPlay = true,
+      playsInline = true,
+      muted = true,
+      style,
       ...rest
     }: MageReactCamProps,
     ref
   ) => {
-    const internalRef = useRef<HTMLVideoElement & TReactCamRef>(null);
+    const internalRef = useRef<HTMLVideoElement>(null);
     const [maxZoom, setMaxZoom] = useState<number>(1);
     const [zoomLevel, setZoomLevel] = useState<number>(1);
-    const [currentFacingMode, setCurrentFacingMode] = useState<
-      "environment" | "user"
-    >(facingMode);
+    const [currentFacingMode, setCurrentFacingMode] = useState<"environment" | "user">(facingMode);
 
     const snapshot = () => {
-      if (internalRef.current) {
-        const video = internalRef.current;
-        const tempCanvas = document.createElement("canvas");
-        const tempContext = tempCanvas.getContext("2d");
-        tempCanvas.width = video.videoWidth;
-        tempCanvas.height = video.videoHeight;
-        tempContext?.drawImage(
-          video,
-          0,
-          0,
-          tempCanvas.width,
-          tempCanvas.height
-        );
+      const video = internalRef.current;
+      if (!video) return undefined;
+      const tempCanvas = document.createElement("canvas");
+      const tempContext = tempCanvas.getContext("2d");
+      if (!tempContext) return undefined;
 
-        const dataURL = tempCanvas.toDataURL("image/jpeg");
-        return dataURL;
-      }
+      tempCanvas.width = video.videoWidth;
+      tempCanvas.height = video.videoHeight;
+      tempContext.drawImage(video, 0, 0, tempCanvas.width, tempCanvas.height);
+
+      return tempCanvas.toDataURL("image/jpeg");
     };
 
-    const zoomIn = () => {
-      setZoomLevel((prevZoom) =>
-        prevZoom + 1 <= maxZoom ? prevZoom + 1 : prevZoom
-      );
-    };
-
-    const zoomOut = () => {
-      setZoomLevel((prevZoom) => (prevZoom > 1 ? prevZoom - 1 : prevZoom));
-    };
-
+    const zoomIn = () => setZoomLevel((prev) => (prev + 1 <= maxZoom ? prev + 1 : prev));
+    const zoomOut = () => setZoomLevel((prev) => (prev > 1 ? prev - 1 : prev));
     const getMaxZoomLevel = () => maxZoom;
     const getCurrentZoomLevel = () => zoomLevel;
-
     const switchFacingMode = () => {
-      setCurrentFacingMode((prevFacingMode) =>
-        prevFacingMode === "environment" ? "user" : "environment"
-      );
+      setCurrentFacingMode((prev) => (prev === "environment" ? "user" : "environment"));
     };
+
+    useEffect(() => {
+      setCurrentFacingMode(facingMode);
+    }, [facingMode]);
 
     useImperativeHandle(ref, () => ({
       snapshot,
@@ -109,42 +87,43 @@ const MageReactCam = forwardRef<TReactCamRef, MageReactCamProps>(
       switchFacingMode,
       getMaxZoomLevel,
       getCurrentZoomLevel,
+      video: internalRef.current,
     }));
 
     useEffect(() => {
-      const constraints: CustomConstraintsProps = {
-        video: {
-          facingMode: currentFacingMode,
-          width: { ideal: width || 500 },
-          height: { ideal: height || 500 },
-          advanced: [
-            {
-              zoom: zoomLevel,
+      let stream: MediaStream | null = null;
+
+      const initializeCamera = async () => {
+        try {
+          const constraints: MediaStreamConstraints = {
+            video: {
+              ...videoConstraints,
+              facingMode: currentFacingMode,
+              width: width ? { ideal: width } : undefined,
+              height: height ? { ideal: height } : undefined,
+              advanced: [{ zoom: zoomLevel } as ZoomMediaTrackConstraintSet],
             },
-          ],
-        },
-      };
+          };
 
-      let stream: MediaStream;
-
-      navigator.mediaDevices
-        .getUserMedia(constraints)
-        .then((s) => {
-          stream = s;
+          stream = await navigator.mediaDevices.getUserMedia(constraints);
           const videoTrack = stream.getVideoTracks()[0];
-          const capabilities =
-            videoTrack.getCapabilities() as CustomMediaTrackCapabilitiesProps;
+          const capabilities = videoTrack.getCapabilities() as ZoomMediaTrackCapabilities;
+
           if (capabilities.zoom) {
-            const maxZoom = capabilities.zoom.max;
-            setMaxZoom(maxZoom);
+            setMaxZoom(capabilities.zoom.max);
           }
+
           if (internalRef.current) {
             internalRef.current.srcObject = stream;
           }
-        })
-        .catch((error) => {
-          onUserMediaError && onUserMediaError(error);
-        });
+        } catch (error: unknown) {
+          if (onUserMediaError) {
+            onUserMediaError(error);
+          }
+        }
+      };
+
+      initializeCamera();
 
       return () => {
         if (stream) {
@@ -153,16 +132,23 @@ const MageReactCam = forwardRef<TReactCamRef, MageReactCamProps>(
       };
     }, [
       zoomLevel,
-      internalRef,
+      currentFacingMode,
+      width,
+      height,
       videoConstraints,
       onUserMediaError,
-      height,
-      width,
-      facingMode,
-      currentFacingMode,
     ]);
 
-    return <video style={{ width: "100%" }} ref={internalRef} {...rest} />;
+    return (
+      <video
+        ref={internalRef}
+        autoPlay={autoPlay}
+        playsInline={playsInline}
+        muted={muted}
+        style={{ width: "100%", ...style }}
+        {...rest}
+      />
+    );
   }
 );
 
